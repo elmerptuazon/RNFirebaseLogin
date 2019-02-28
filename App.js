@@ -42,6 +42,11 @@ class MainApp extends Component<Props> {
     handleSignup = (email, password) => {
         try{
             firebase.auth().createUserWithEmailAndPassword(email, password)
+            this.setState({
+                username: "",
+                password: ""
+            })
+
         }
         catch(err) {
             console.log(err.toString())
