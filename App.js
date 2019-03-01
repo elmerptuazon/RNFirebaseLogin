@@ -8,9 +8,9 @@
  */
 
 import React, {Component} from 'react';
-import {Button, Platform, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Button, Platform, StyleSheet, Text, TextInput, View, Switch} from 'react-native';
 import firebase from 'firebase';
-import { createSwitchNavigator, createAppContainer } from 'react-navigation';
+import { createSwitchNavigator, createAppContainer, createMaterialTopTabNavigator } from 'react-navigation';
 
   const config = {
     apiKey: "AIzaSyBrGJiUeCKfcn-tl3-_uIXX7cEoYiDJlyw",
@@ -35,17 +35,14 @@ class MainApp extends Component<Props> {
         super(props)
         this.state = {
             username: "",
-            password: ""
+            password: "",
+            switchbutton: false
         }
     }
 
     handleSignup = (email, password) => {
         try{
             firebase.auth().createUserWithEmailAndPassword(email, password)
-            this.setState({
-                username: "",
-                password: ""
-            })
 
         }
         catch(err) {
@@ -62,6 +59,10 @@ class MainApp extends Component<Props> {
         }
     }
 
+    handlePress = (val) => {
+        this.setState({switchbutton: val})
+    }
+
   render() {
     return (
       <View style={styles.container}>
@@ -76,7 +77,12 @@ class MainApp extends Component<Props> {
         </View>
         <View style={styles.inputboxStyle}>
             <Button title={"Login"} onPress={() => this.handleLogin(this.state.username, this.state.password)} />
-            <Button title={"Sign Up"} onPress={() => this.handleSignup(this.state.username, this.state.password)} />
+        </View>
+        <View style={{width: 100, padding:10, alignItems: 'center', flexDirection: 'row', alignSelf: 'flex-start'}}>
+            <Text>Notification</Text>
+        </View>
+        <View style={{alignSelf: 'flex-end'}}>
+            <Switch onValueChange={this.handlePress} value={this.state.switchbutton} />
         </View>
       </View>
     );
@@ -123,10 +129,78 @@ class Profile extends Component<Props> {
     }
 }
 
+class profileMessage extends Component<Props> {
+    render() {
+        return (
+            <View>
+                <Text>Message</Text>
+            </View>
+        );
+    }
+}
+
+class profileFriendList extends Component<Props> {
+    render() {
+        return (
+            <View>
+                <Text>Friend</Text>
+            </View>
+        );
+    }
+}
+
+class profileSettings extends Component<Props> {
+
+    constructor() {
+        super()
+        this.state = {
+            username: ""
+        }
+    }
+
+    componentDidMount() {
+        this.authSubscription = firebase.auth().onAuthStateChanged((user) => {
+            console.log(user)
+            this.setState({
+                username: user.email
+            })
+        });
+    }
+
+    componentWillUnmount() {
+        this.authSubscription()
+    }
+
+    handleLogout = () => {
+        this.props.navigation.navigate('MainApp')
+    }
+
+    render() {
+        return (
+            <View style={styles.container}>
+                <ScrollView>
+                <View style={styles.inputboxStyle}>
+                    <Text style={{fontSize: 10, textAlign: 'center', color: 'black'}}>Email Logged In: {this.state.username}</Text>
+                </View>
+                <View style={styles.inputboxStyle}>
+                    <Button title={"Logout"} onPress={() => this.handleLogout()}/>
+                </View>
+                </ScrollView>
+            </View>
+        );
+    }
+}
+
+const profileTopNavigator = createMaterialTopTabNavigator({
+    'messages': profileMessage,
+    'friends': profileFriendList,
+    'settings': profileSettings
+})
+
 const RootStack = createSwitchNavigator(
     {
         'MainApp': MainApp,
-        'Profile': Profile
+        'Profile': profileTopNavigator
     },
     {
         initialRouteName: 'MainApp'
@@ -144,7 +218,7 @@ const styles = StyleSheet.create({
   },
   inputboxStyle: {
     margin: 20,
-    height: 50,
+    height: 20,
   },
   instructions: {
     textAlign: 'center',
