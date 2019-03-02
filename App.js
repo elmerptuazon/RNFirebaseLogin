@@ -8,7 +8,7 @@
  */
 
 import React, {Component} from 'react';
-import {Button, Platform, StyleSheet, Text, TextInput, View, Switch} from 'react-native';
+import {Button, Platform, StyleSheet, Text, TextInput, View, Switch, ScrollView} from 'react-native';
 import firebase from 'firebase';
 import { createSwitchNavigator, createAppContainer, createMaterialTopTabNavigator } from 'react-navigation';
 
@@ -34,9 +34,8 @@ class MainApp extends Component<Props> {
     constructor(props) {
         super(props)
         this.state = {
-            username: "",
-            password: "",
-            switchbutton: false
+            username: "qwerty@qwerty.com",
+            password: "qwerty"
         }
     }
 
@@ -59,10 +58,6 @@ class MainApp extends Component<Props> {
         }
     }
 
-    handlePress = (val) => {
-        this.setState({switchbutton: val})
-    }
-
   render() {
     return (
       <View style={styles.container}>
@@ -78,11 +73,8 @@ class MainApp extends Component<Props> {
         <View style={styles.inputboxStyle}>
             <Button title={"Login"} onPress={() => this.handleLogin(this.state.username, this.state.password)} />
         </View>
-        <View style={{width: 100, padding:10, alignItems: 'center', flexDirection: 'row', alignSelf: 'flex-start'}}>
-            <Text>Notification</Text>
-        </View>
-        <View style={{alignSelf: 'flex-end'}}>
-            <Switch onValueChange={this.handlePress} value={this.state.switchbutton} />
+        <View style={styles.inputboxStyle}>
+            <Button title={"Signup"} onPress={() => this.handleSignup(this.state.username, this.state.password)} />
         </View>
       </View>
     );
@@ -154,7 +146,9 @@ class profileSettings extends Component<Props> {
     constructor() {
         super()
         this.state = {
-            username: ""
+            username: "",
+            switchbutton: false,
+            isDarkTheme: false
         }
     }
 
@@ -171,18 +165,34 @@ class profileSettings extends Component<Props> {
         this.authSubscription()
     }
 
+    handleDarkTheme = (val) => {
+        this.setState({isDarkTheme: val})
+    }
+
+    handleLinkFb = (val) => {
+        this.setState({switchbutton: val})
+    }
+
     handleLogout = () => {
         this.props.navigation.navigate('MainApp')
     }
 
     render() {
         return (
-            <View style={styles.container}>
+            <View style={this.state.isDarkTheme ? styles.containerBlackTheme : styles.container}>
                 <ScrollView>
                 <View style={styles.inputboxStyle}>
-                    <Text style={{fontSize: 10, textAlign: 'center', color: 'black'}}>Email Logged In: {this.state.username}</Text>
+                    <Text style={this.state.isDarkTheme ? {fontSize: 20, textAlign: 'center', color: 'white'} : {fontSize: 20, textAlign: 'center', color: 'black'}}>Email Logged In: {this.state.username}</Text>
                 </View>
-                <View style={styles.inputboxStyle}>
+                <View style={{flex: 1, width: 'auto', padding:20, alignItems: 'center', flexDirection: 'row', alignSelf: 'flex-start'}}>
+                    <Text style={this.state.isDarkTheme ? {color: 'white'} : {color: 'black'}}>Dark Theme</Text>
+                    <Switch onValueChange={this.handleDarkTheme} value={this.state.isDarkTheme} />
+                </View>
+                <View style={{flex:1,width: 'auto', padding:20, alignItems: 'center', flexDirection: 'row', alignSelf: 'flex-start'}}>
+                    <Text style={this.state.isDarkTheme ? {color: 'white'} : {color: 'black'}}>Link to Facebook</Text>
+                    <Switch onValueChange={this.handleLinkFb} value={this.state.switchbutton} />
+                </View>
+                <View style={{width: 200, padding:20, flexDirection: 'row'}}>
                     <Button title={"Logout"} onPress={() => this.handleLogout()}/>
                 </View>
                 </ScrollView>
@@ -216,9 +226,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'stretch',
   },
+  containerBlackTheme: {
+      flex: 1,
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'stretch',
+      backgroundColor: 'black'
+    },
   inputboxStyle: {
     margin: 20,
-    height: 20,
+    height: 40,
   },
   instructions: {
     textAlign: 'center',
