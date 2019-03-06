@@ -8,9 +8,14 @@
  */
 
 import React, {Component} from 'react';
-import {Button, Platform, StyleSheet, Text, TextInput, View, Switch, ScrollView} from 'react-native';
+import {Button, Platform, StyleSheet, Text, TextInput, View, Switch, ScrollView, FlatList} from 'react-native';
 import firebase from 'firebase';
 import { createSwitchNavigator, createAppContainer, createMaterialTopTabNavigator } from 'react-navigation';
+import AwesomeButtonCartman from 'react-native-really-awesome-button/src/themes/cartman';
+
+const RNF_GLOBALS = {
+    isDark: false
+}
 
   const config = {
     apiKey: "AIzaSyBrGJiUeCKfcn-tl3-_uIXX7cEoYiDJlyw",
@@ -34,8 +39,8 @@ class MainApp extends Component<Props> {
     constructor(props) {
         super(props)
         this.state = {
-            username: "qwerty@qwerty.com",
-            password: "qwerty"
+            username: "",
+            password: ""
         }
     }
 
@@ -64,11 +69,11 @@ class MainApp extends Component<Props> {
         <Text style={{fontSize: 20, textAlign: 'center', color: 'black'}}>RNFirebase Login</Text>
         <View style={styles.inputboxStyle}>
             <Text>Username</Text>
-            <TextInput keyboardType={"email-address"} onChangeText={(username) => this.setState({username})} />
+            <TextInput style={{ borderRadius: 4, borderWidth: 0.5, borderColor: 'black'}} keyboardType={"email-address"} onChangeText={(username) => this.setState({username})} />
         </View>
         <View style={styles.inputboxStyle}>
             <Text>Password</Text>
-            <TextInput secureTextEntry={true} onChangeText={(password) => this.setState({password})} />
+            <TextInput style={{ borderRadius: 4, borderWidth: 0.5, borderColor: 'black'}} secureTextEntry={true} onChangeText={(password) => this.setState({password})} />
         </View>
         <View style={styles.inputboxStyle}>
             <Button title={"Login"} onPress={() => this.handleLogin(this.state.username, this.state.password)} />
@@ -81,20 +86,41 @@ class MainApp extends Component<Props> {
   }
 }
 
-class Profile extends Component<Props> {
+class profileMessage extends Component<Props> {
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
+
         this.state = {
-            username: ""
+            username: "",
+            userMessage: "",
+            userMessageArr: []
         }
-    }
 
-    handleLogout = () => {
-        this.props.navigation.navigate('MainApp')
+        this.addItem = this.addItem.bind(this);
     }
 
     componentDidMount() {
+        firebase.database().ref().child("messages").once("value", snapshot => {
+            const data = snapshot.val()
+            if(snapshot.val()) {
+                const initMessages = [];
+                Object.keys(data).forEach(message => {
+                initMessages.push(data[message])
+                });
+            this.setState({userMessageArr: initMessages})
+            }
+        });
+
+        firebase.database().ref().child('messages').on("child_added", snapshot => {
+            const data = snapshot.val();
+            if(data) {
+                this.setState(prevState => ({
+                    userMessageArr: [data, ...prevState.userMessageArr]
+                }))
+            }
+        })
+
         this.authSubscription = firebase.auth().onAuthStateChanged((user) => {
             console.log(user)
             this.setState({
@@ -107,35 +133,52 @@ class Profile extends Component<Props> {
         this.authSubscription()
     }
 
+      addItem () {
+        if (!this.state.userMessage) return;
+
+        const newMessage = firebase.database().ref().child("messages").push();
+        newMessage.set(this.state.userMessage, () => this.setState({userMessage: ''}))
+      }
+
     render() {
+
+        const addDate = new Date().toString();
+
         return (
             <View style={styles.container}>
-                <View style={{margin: 20, width: 100, height: 50}}>
-                    <Button title={"Logout"} onPress={() => this.handleLogout()}/>
+                <FlatList data={this.state.userMessageArr}
+                renderItem={({item}) =>
+                    <View style={{flex: 1}}>
+                        <Text style={styles.listItem}>{item}</Text>
+                        <Text>FROM: {this.state.username}</Text>
+                        <Text>{addDate}</Text>
+                    </View>
+                } />
+                <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 10}}>
+                    <TextInput style={{ borderRadius: 4, borderWidth: 0.5, borderColor: 'black'}} value={this.state.userMessage} onChangeText={(val) => {this.setState({userMessage: val})}}/>
+                    <Button title='Send' onPress={this.addItem}/>
                 </View>
-                <View style={styles.inputboxStyle}>
-                    <Text style={{fontSize: 20, textAlign: 'center', color: 'black'}}>Email Logged In: {this.state.username}</Text>
-                </View>
-            </View>
-        )
-    }
-}
-
-class profileMessage extends Component<Props> {
-    render() {
-        return (
-            <View>
-                <Text>Message</Text>
             </View>
         );
     }
 }
 
 class profileFriendList extends Component<Props> {
+
+    constructor() {
+        super()
+
+        this.handleAddFriend = this.handleAddFriend.bind(this)
+    }
+
+    handleAddFriend() {
+
+    }
+
     render() {
         return (
             <View>
-                <Text>Friend</Text>
+                <AwesomeButtonCartman type="secondary" onPress={this.handleAddFriend}>Add Friend</AwesomeButtonCartman>
             </View>
         );
     }
@@ -148,7 +191,7 @@ class profileSettings extends Component<Props> {
         this.state = {
             username: "",
             switchbutton: false,
-            isDarkTheme: false
+            isDarkTheme: RNF_GLOBALS.isDark
         }
     }
 
@@ -236,6 +279,16 @@ const styles = StyleSheet.create({
   inputboxStyle: {
     margin: 20,
     height: 40,
+  },
+  messages: {
+    marginBottom: 20,
+    width: 100 + "%",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'black'
+  },
+  listItem: {
+    fontSize: 20,
+    padding: 10
   },
   instructions: {
     textAlign: 'center',

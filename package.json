@@ -9,8 +9,10 @@
   "dependencies": {
     "firebase": "^4.9.1",
     "react": "16.6.3",
-    "react-native": "0.58.5",
+    "react-native": "^0.58.6",
+    "react-native-firebase": "^5.2.0",
     "react-native-gesture-handler": "^1.0.16",
+    "react-native-really-awesome-button": "^1.4.0",
     "react-navigation": "^3.3.2"
   },
   "devDependencies": {
