@@ -12,6 +12,7 @@
     "react-native": "^0.58.6",
     "react-native-firebase": "^5.2.0",
     "react-native-gesture-handler": "^1.0.16",
+    "react-native-modal": "^9.0.0",
     "react-native-really-awesome-button": "^1.4.0",
     "react-navigation": "^3.3.2"
   },

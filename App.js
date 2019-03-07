@@ -8,10 +8,12 @@
  */
 
 import React, {Component} from 'react';
-import {Button, Platform, StyleSheet, Text, TextInput, View, Switch, ScrollView, FlatList} from 'react-native';
+import {Alert, Button, Platform, StyleSheet, Text, TextInput, View, Switch, ScrollView, FlatList} from 'react-native';
 import firebase from 'firebase';
 import { createSwitchNavigator, createAppContainer, createMaterialTopTabNavigator } from 'react-navigation';
 import AwesomeButtonCartman from 'react-native-really-awesome-button/src/themes/cartman';
+import Modal from "react-native-modal";
+
 
 const RNF_GLOBALS = {
     isDark: false
@@ -94,7 +96,8 @@ class profileMessage extends Component<Props> {
         this.state = {
             username: "",
             userMessage: "",
-            userMessageArr: []
+            userMessageArr: [],
+            idToken: ""
         }
 
         this.addItem = this.addItem.bind(this);
@@ -122,10 +125,10 @@ class profileMessage extends Component<Props> {
         })
 
         this.authSubscription = firebase.auth().onAuthStateChanged((user) => {
-            console.log(user)
+            firebase.auth().currentUser.getToken().then(token => this.setState({idToken: token}))
             this.setState({
                 username: user.email
-            })
+            });
         });
     }
 
@@ -146,14 +149,17 @@ class profileMessage extends Component<Props> {
 
         return (
             <View style={styles.container}>
-                <FlatList data={this.state.userMessageArr}
-                renderItem={({item}) =>
-                    <View style={{flex: 1}}>
-                        <Text style={styles.listItem}>{item}</Text>
-                        <Text>FROM: {this.state.username}</Text>
-                        <Text>{addDate}</Text>
-                    </View>
-                } />
+                <ScrollView>
+                    <FlatList data={this.state.userMessageArr}
+                    renderItem={({item}) =>
+                        <View style={{flex: 1}}>
+                            <Text style={styles.listItem}>{item}</Text>
+                            <Text>FROM: {this.state.username}</Text>
+                            <Text>{this.state.idToken}</Text>
+                            <Text>{addDate}</Text>
+                        </View>
+                    } />
+                </ScrollView>
                 <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 10}}>
                     <TextInput style={{ borderRadius: 4, borderWidth: 0.5, borderColor: 'black'}} value={this.state.userMessage} onChangeText={(val) => {this.setState({userMessage: val})}}/>
                     <Button title='Send' onPress={this.addItem}/>
@@ -168,17 +174,51 @@ class profileFriendList extends Component<Props> {
     constructor() {
         super()
 
-        this.handleAddFriend = this.handleAddFriend.bind(this)
+        this.state = {
+            friendArr: [],
+            isModalOpen: false,
+            friend: ""
+        }
+
+        this._handleAddFriend = this._handleAddFriend.bind(this)
+        this._handleAddFriendList = this._handleAddFriendList.bind(this)
     }
 
-    handleAddFriend() {
+    _handleAddFriend = () => {
+        this.setState({isModalOpen: !this.state.isModalOpen})
+    }
 
+    _handleAddFriendList = (friend) => {
+        const createFriendList = [];
+        createFriendList.push(friend)
+
+        this.setState({
+            friendArr: createFriendList
+        })
     }
 
     render() {
         return (
-            <View>
-                <AwesomeButtonCartman type="secondary" onPress={this.handleAddFriend}>Add Friend</AwesomeButtonCartman>
+            <View style={styles.container}>
+                <AwesomeButtonCartman type="secondary" onPress={this._handleAddFriend}>Add Friend</AwesomeButtonCartman>
+                <View style={styles.inputboxStyle}>
+                    <ScrollView>
+                        <Modal isVisible={this.state.isModalOpen} backdropColor={'white'} onBackdropPress={() => {this.setState({isModalOpen: false})}}>
+                            <View style={styles.container}>
+                                <Text style={{fontSize: 20}}>Add Friend</Text>
+                                <TextInput style={{ borderRadius: 4, borderWidth: 0.5, borderColor: 'black'}} keyboardType={"email-address"} onChangeText={(friend) => this.setState({friend})} />
+                                <Button title={"Add"} onPress={() => this._handleAddFriendList(this.state.friend)} />
+                            </View>
+                        </Modal>
+                    </ScrollView>
+                </View>
+                    <Text style={{fontSize: 20}}>Friend List</Text>
+                    <FlatList data={this.state.friendArr}
+                    renderItem={({item}) =>
+                        <View style={{flex: 1}}>
+                            <Text style={styles.listItem}>{item}</Text>
+                        </View>
+                    } />
             </View>
         );
     }
@@ -217,6 +257,12 @@ class profileSettings extends Component<Props> {
     }
 
     handleLogout = () => {
+
+        firebase.auth().signOut().then(function() {
+          // Sign-out successful.
+        }).catch(function(error) {
+          // An error happened.
+        });
         this.props.navigation.navigate('MainApp')
     }
 
